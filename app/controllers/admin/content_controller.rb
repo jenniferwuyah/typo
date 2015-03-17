@@ -6,6 +6,16 @@ class Admin::ContentController < Admin::BaseController
 
   cache_sweeper :blog_sweeper
 
+  def merge_with
+    article = Article.find_by_id(params[:id])
+    if article.merge_with(params[:merge_with])
+      flash[:notice] = _("Articles #{params[:merge_with]} successfully merged into #{params[:id]}.")
+    else
+      flash[:error] = _("Cannot complete the Merge Action.")
+    end
+    redirect_to :action => :edit, :id => params[:id]
+  end
+
   def auto_complete_for_article_keywords
     @items = Tag.find_with_char params[:article][:keywords].strip
     render :inline => "<%= raw auto_complete_result @items, 'name' %>"
@@ -240,4 +250,5 @@ class Admin::ContentController < Admin::BaseController
   def setup_resources
     @resources = Resource.by_created_at
   end
+
 end
