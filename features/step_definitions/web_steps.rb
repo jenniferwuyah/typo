@@ -43,6 +43,21 @@ Given /^the blog is set up$/ do
                 :state => 'active'})
 end
 
+Given /^a publisher is created$/ do
+  User.create!({:login => 'publisher', 
+		:password => '1234567',
+		:email => "publisher@user.com",
+		:profile_id => 2,
+		:name => 'publisher',
+		:state => 'active'})
+end
+
+Given /^the following articles exist:$/ do |table|
+  table.hashes.each do |article|
+    Article.create!(article)
+  end
+end
+
 And /^I am logged into the admin panel$/ do
   visit '/accounts/login'
   fill_in 'user_login', :with => 'admin'
@@ -53,6 +68,47 @@ And /^I am logged into the admin panel$/ do
   else
     assert page.has_content?('Login successful')
   end
+end
+
+And /^I am logged in as publisher$/ do
+  visit '/accounts/login'
+  fill_in 'user_login', :with => 'publisher'
+  fill_in 'user_password', :with => '1234567'
+  click_button 'Login'
+  if page.respond_to? :should
+    page.should have_content('Login successful')
+  else
+    assert page.has_content?('Login successful')
+  end
+end
+
+And /^I create a (.*) article$/ do |title|
+  visit '/admin/content/new'
+  fill_in 'article_title', :with => "#{title}"
+  fill_in 'article__body_and_extended_editor', :with => "Content of #{title}"
+  click_button 'Publish'
+  if page.respond_to? :should
+    page.should have_content('Article was successfully created')
+  else
+    assert page.has_content?('Article was successfully created')
+  end
+end
+
+And /^I merge (.*) into (.*)$/ do |other, target|
+  Article.find_by_title(target).merge_with(Article.find_by_title(other).id)
+end
+
+Then /^the author of (.*) should be (.*)$/ do |article, author|
+  assert Article.find_by_title(article).author == author
+end
+
+Then /^I post a "(.*)" comment to (.*)$/ do |comment, article|
+  step "I go to the home page"
+  step "I follow \"#{article}\""
+  fill_in 'comment_author', :with => "#{comment}-er"
+  fill_in 'comment_email', :with => "#{comment}@somemail.com"
+  fill_in 'comment_body', :with => "#{comment}"
+  step "I press \"comment\""
 end
 
 # Single-line step scoper

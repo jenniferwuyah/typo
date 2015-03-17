@@ -7,9 +7,14 @@ class Admin::ContentController < Admin::BaseController
   cache_sweeper :blog_sweeper
 
   def merge_with
+    unless current_user.admin?
+      flash[:error] = _("You are not an admin, cannot perform merge.")
+      redirect_to :action => :index
+    end
+
     article = Article.find_by_id(params[:id])
     if article.merge_with(params[:merge_with])
-      flash[:notice] = _("Articles #{params[:merge_with]} successfully merged into #{params[:id]}.")
+      flash[:notice] = _("Articles merged successfully.")
     else
       flash[:error] = _("Cannot complete the Merge Action.")
     end
